@@ -234,7 +234,7 @@ The API supports `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/a
 
 ### Deploy to Render and Aiven
 
-The root `render.yaml` defines separate Render services for the Docker-based API and React static site. Create the services from the Blueprint and set the prompted API database variables from the Aiven service. Keep `JWT_SECRET` and `REFRESH_TOKEN_KEY` distinct, random, and at least 32 characters long. The API service is configured to accept browser requests only from the frontend's Render origin. For stronger server identity verification, set `DB_SSL_CA` to a mounted copy of Aiven's CA bundle and use `DB_SSL_MODE=VERIFY_IDENTITY`.
+The root `render.yaml` builds the React application into the Docker-based LavaLust service, so the Stockroom web app appears at the service root and its API remains available under `/api`. Create the service from the Blueprint and set the prompted database variables from the Aiven service. Keep `JWT_SECRET` and `REFRESH_TOKEN_KEY` distinct, random, and at least 32 characters long. For stronger server identity verification, set `DB_SSL_CA` to a mounted copy of Aiven's CA bundle and use `DB_SSL_MODE=VERIFY_IDENTITY`.
 
 Keep `MIGRATION_ENABLED=false` on the deployed API. To run migrations, execute `MIGRATION_ENABLED=true php lava migration run` from a trusted Render shell/container session. The CLI setting is limited to that process; web migration routes additionally require a valid administrator JWT. The API defaults and `.env.example` keep migrations and the API helper disabled until explicitly configured.
 

@@ -10,7 +10,7 @@ services:
       - key: API_HELPER_ENABLED
         value: "true"
       - key: API_ALLOWED_ORIGIN
-        value: https://lavalust-products-frontend.onrender.com
+        value: https://francine-kate-francisco-api.onrender.com
       - key: DB_DRIVER
         value: mysql
       - key: DB_CHARSET
@@ -35,12 +35,3 @@ services:
         sync: false
       - key: MIGRATION_ENABLED
         value: "false"
-
-  - type: web
-    name: lavalust-products-frontend
-    runtime: static
-    buildCommand: npm ci --prefix frontend && npm run build --prefix frontend
-    staticPublishPath: ./frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://lavalust-products-api.onrender.com/api
