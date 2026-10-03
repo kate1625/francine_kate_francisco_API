@@ -268,9 +268,45 @@ class Database {
             PDO::ATTR_EMULATE_PREPARES   => false,
         );
 
+        $ssl_ca = $database_config['ssl_ca'] ?? '';
+        $ssl_mode = strtoupper($database_config['ssl_mode'] ?? '');
+        if ($driver === 'mysql' && in_array($ssl_mode, ['REQUIRED', 'VERIFY_CA', 'VERIFY_IDENTITY'], true)) {
+            if ($ssl_mode !== 'REQUIRED' && $ssl_ca === '') {
+                throw new PDOException('DB_SSL_CA is required when DB_SSL_MODE verifies the server certificate.');
+            }
+
+            $verify_ssl_constant = defined('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
+                ? constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
+                : (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')
+                    ? constant('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')
+                    : null);
+            if ($verify_ssl_constant === null) {
+                throw new PDOException('The PDO MySQL driver does not support the configured SSL mode.');
+            }
+
+            $ssl_ca_constant = defined('Pdo\\Mysql::ATTR_SSL_CA')
+                ? constant('Pdo\\Mysql::ATTR_SSL_CA')
+                : (defined('PDO::MYSQL_ATTR_SSL_CA') ? constant('PDO::MYSQL_ATTR_SSL_CA') : null);
+            if ($ssl_ca !== '' && $ssl_ca_constant !== null) {
+                $options[$ssl_ca_constant] = $ssl_ca;
+            }
+            $options[$verify_ssl_constant] = $ssl_mode !== 'REQUIRED';
+
+            if (defined('PDO::MYSQL_ATTR_SSL_ENFORCE')) {
+                $options[constant('PDO::MYSQL_ATTR_SSL_ENFORCE')] = true;
+            }
+        }
+
         try {
             $this->db = new PDO($dsn, $username, $password, $options);
             $this->driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+            if ($driver === 'mysql' && $ssl_mode !== '' && $ssl_mode !== 'DISABLED') {
+                $ssl_status = $this->db->query("SHOW STATUS LIKE 'Ssl_cipher'")->fetch(PDO::FETCH_ASSOC);
+                if (empty($ssl_status['Value'])) {
+                    throw new PDOException('The MySQL connection did not negotiate TLS as required by DB_SSL_MODE.');
+                }
+            }
         } catch (Exception $e) {
             $error = load_class('Errors', 'kernel');
             $error->show_database_error(

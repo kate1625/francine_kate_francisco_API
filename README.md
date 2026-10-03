@@ -217,6 +217,29 @@ $router->get('/api/users', 'Api::users');
 
 ---
 
+## Product CRUD and React client
+
+This repository includes a React product-management client in `frontend/` and a JSON API in LavaLust. The client only communicates with the API; it never connects directly to MySQL.
+
+### Run locally
+
+1. Copy `.env.example` to `.env` and fill in the MySQL connection settings (`DB_DRIVER=mysql`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`). Use `DB_SSL_MODE=REQUIRED` and set `DB_SSL_CA` to an installed CA bundle path so PDO negotiates TLS. Aiven's `REQUIRED` mode encrypts the connection but does not verify the server certificate; use Aiven's downloaded CA and `VERIFY_IDENTITY` if you want hostname and certificate verification.
+2. Generate distinct JWT secrets with `php lava jwt:generate`.
+3. Set `API_HELPER_ENABLED=true` in `.env`. Temporarily set `MIGRATION_ENABLED=true`, then run `php lava migration run`. Set `MIGRATION_ENABLED=false` again after the migration finishes.
+4. Start the API with `php lava serve --port=3000`.
+5. In another terminal, run `npm ci --prefix frontend` and `npm run dev --prefix frontend`. The Vite development server proxies `/api` requests to `http://localhost:3000`.
+6. Create an account from the sign-in screen. Registration creates a standard user account. Sign in and manage products from the dashboard.
+
+The API supports `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, and `POST /api/auth/logout`. Product endpoints are protected by LavaLust JWT bearer authentication: `GET /api/products`, `GET /api/products/{id}`, `POST /api/products`, `PUT/PATCH /api/products/{id}`, and `DELETE /api/products/{id}`.
+
+### Deploy to Render and Aiven
+
+The root `render.yaml` defines separate Render services for the Docker-based API and React static site. Create the services from the Blueprint and set the prompted API database variables from the Aiven service. Keep `JWT_SECRET` and `REFRESH_TOKEN_KEY` distinct, random, and at least 32 characters long. The API service is configured to accept browser requests only from the frontend's Render origin. For stronger server identity verification, set `DB_SSL_CA` to a mounted copy of Aiven's CA bundle and use `DB_SSL_MODE=VERIFY_IDENTITY`.
+
+Keep `MIGRATION_ENABLED=false` on the deployed API. To run migrations, execute `MIGRATION_ENABLED=true php lava migration run` from a trusted Render shell/container session. The CLI setting is limited to that process; web migration routes additionally require a valid administrator JWT. The API defaults and `.env.example` keep migrations and the API helper disabled until explicitly configured.
+
+---
+
 ## Philosophy
 
 LavaLust is built on a single principle: **minimal core, maximum control.**

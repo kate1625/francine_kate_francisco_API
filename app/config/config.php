@@ -98,6 +98,13 @@ $config['base_url'] 				= '';
 | Enable Static Proxies / Facades
 |
 */
+$api_allowed_origins = array_values(array_filter(array_map(
+    'trim',
+    explode(',', getenv('API_ALLOWED_ORIGIN') ?: '*')
+)));
+$config['allow_origin'] = count($api_allowed_origins) === 1 && $api_allowed_origins[0] === '*'
+    ? '*'
+    : $api_allowed_origins;
 $config['proxy_enabled']           = FALSE;
 
 /*
