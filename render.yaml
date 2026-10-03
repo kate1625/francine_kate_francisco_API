@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: lavalust-products-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: API_HELPER_ENABLED
+        value: "true"
+      - key: API_ALLOWED_ORIGIN
+        value: https://lavalust-products-frontend.onrender.com
+      - key: DB_DRIVER
+        value: mysql
+      - key: DB_CHARSET
+        value: utf8mb4
+      - key: DB_SSL_MODE
+        value: REQUIRED
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
+      - key: JWT_SECRET
+        sync: false
+      - key: REFRESH_TOKEN_KEY
+        sync: false
+      - key: MIGRATION_ENABLED
+        value: "false"
+
+  - type: web
+    name: lavalust-products-frontend
+    runtime: static
+    buildCommand: npm ci --prefix frontend && npm run build --prefix frontend
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://lavalust-products-api.onrender.com/api
